@@ -1,15 +1,10 @@
 from typing import Union
-from dotenv import load_dotenv
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers.LambdaRouter import LambdaRouter
 
-load_dotenv()
-
 app = FastAPI()
-
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,11 +16,9 @@ app.add_middleware(
 
 app.include_router(LambdaRouter)
 
-# @app.post("/ban")
+# @app.get("/")
 # def post_ban():
-#     print('aaaa')
 #     return {"Hello": "World"}
-
 
 # @app.get("/items/{item_id}")
 # def read_item(item_id: int, q: Union[str, None] = None):
