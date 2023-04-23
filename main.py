@@ -3,6 +3,7 @@ from typing import Union
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers.LambdaRouter import LambdaRouter
+from routers.SlackRouter import SlackRouter
 
 app = FastAPI()
 
@@ -15,6 +16,7 @@ app.add_middleware(
 )
 
 app.include_router(LambdaRouter)
+app.include_router(SlackRouter)
 
 # @app.get("/")
 # def post_ban():
