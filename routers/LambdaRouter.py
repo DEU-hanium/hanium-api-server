@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import boto3
 import os
 from dotenv import load_dotenv
+import requests
 
 load_dotenv()
 
@@ -27,7 +28,7 @@ async def post_lambda(item: Item):
     )
     Address_list = response["IPSet"]["Addresses"]
     Address_list.append(item.ip)
-    lock_token = get_ipset_lock_token(client, IPV4_SET_NAME,IPV4_SET_ID)
+    lock_token = response['LockToken']
     response = client.update_ip_set(
         Name = IPV4_SET_NAME,
         Scope = 'REGIONAL',
@@ -37,14 +38,40 @@ async def post_lambda(item: Item):
         LockToken=lock_token
     )
     print(response)
-    return
 
-def get_ipset_lock_token(client,ipset_name,ipset_id):
-    """Returns the AWS WAF IP set lock token"""
-    ip_set = client.get_ip_set(
-        Name=ipset_name,
-        Scope='REGIONAL',
-        Id=ipset_id
-    )
-    
-    return ip_set['LockToken']
+    template = {
+        "blocks": [
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": "해당 IP가 차단되었습니다."
+                }
+            },
+            {
+                "type": "divider"
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "plain_text",
+                    "text": item.ip
+                }
+            }
+        ]
+    }
+
+    url = "https://slack.com/api/chat.postMessage"
+    headers = {
+        "Authorization": f"Bearer {os.environ['SLACK_TOKEN'].strip()}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "channel": "#crawling-channel",
+        "blocks": template["blocks"]
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+    print(response.json())
+
+    return

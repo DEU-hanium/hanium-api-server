@@ -87,7 +87,7 @@ async def post_require(request: Request):
 	)
 	Address_list = response["IPSet"]["Addresses"]
 	Address_list.remove(form_data.get('text')+"/32")
-	lock_token = get_ipset_lock_token(client, IPV4_SET_NAME,IPV4_SET_ID)
+	lock_token = response['LockToken']
 	response = client.update_ip_set(
 		Name = IPV4_SET_NAME,
 		Scope = 'REGIONAL',
@@ -140,16 +140,6 @@ async def post_require_list():
 	con.close()
 		
 	return template
-
-def get_ipset_lock_token(client,ipset_name,ipset_id):
-    """Returns the AWS WAF IP set lock token"""
-    ip_set = client.get_ip_set(
-        Name=ipset_name,
-        Scope='REGIONAL',
-        Id=ipset_id
-    )
-    
-    return ip_set['LockToken']
 	
 # form_data = await request.form()
 # json_data = json.dumps({key: form_data.getlist(key)[0] for key in form_data.keys()})
