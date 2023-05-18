@@ -26,6 +26,7 @@ async def post_lambda(item: Item):
         Scope='REGIONAL',
         Id=IPV4_SET_ID
     )
+
     Address_list = response["IPSet"]["Addresses"]
     Address_list.append(item.ip)
     lock_token = response['LockToken']

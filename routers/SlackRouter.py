@@ -16,6 +16,7 @@ IPV4_SET_ID=os.environ['IPV4_SET_ID'].strip()
 
 @SlackRouter.post('/ban_list')
 async def post_ban_list(request: Request):
+	
 	con = pymysql.connect(
 		host = os.environ['DATABASE_HOST'].strip(),
 		user = os.environ['DATABASE_USER'].strip(),
@@ -30,7 +31,7 @@ async def post_ban_list(request: Request):
 				"type": "header",
 				"text": {
 					"type": "plain_text",
-					"text": "금지된 ip 리스트를 출력합니다."
+					"text": "차단한 ip 리스트를 출력합니다."
 				}
 			},
 			{
@@ -72,10 +73,14 @@ async def post_require(request: Request):
 	cur = con.cursor()
 	sql = "delete from ban_list where ip='"+ form_data.get('text') + "'"
 	cur.execute(sql)
-	sql = "insert into require_list values ('"+ form_data.get('text') +"', '', current_timestamp)"
+	sql = "select * from require_list where ip='" + form_data.get('text') + "'"
 	cur.execute(sql)
-	cur.close()
+	row_result = cur.rowcount
+	if row_result == 0:
+		sql = "insert into require_list values ('"+ form_data.get('text') +"', '', current_timestamp)"
+		cur.execute(sql)
 	con.commit()
+	cur.close()
 	con.close()
 
 	client = boto3.client('wafv2', region_name = 'ap-northeast-2')
@@ -86,17 +91,21 @@ async def post_require(request: Request):
 		Id=IPV4_SET_ID
 	)
 	Address_list = response["IPSet"]["Addresses"]
-	Address_list.remove(form_data.get('text')+"/32")
-	lock_token = response['LockToken']
-	response = client.update_ip_set(
-		Name = IPV4_SET_NAME,
-		Scope = 'REGIONAL',
-		Id = IPV4_SET_ID,
-		Description = 'string',
-		Addresses = Address_list,
-		LockToken=lock_token
-	)
-	return "성공"
+	try:
+		Address_list.remove(form_data.get('text')+"/32")
+		lock_token = response['LockToken']
+		response = client.update_ip_set(
+			Name = IPV4_SET_NAME,
+			Scope = 'REGIONAL',
+			Id = IPV4_SET_ID,
+			Description = 'string',
+			Addresses = Address_list,
+			LockToken=lock_token
+		)
+		return "성공"
+	except:
+		return "해당 ip가 없습니다."
+	
 
 
 @SlackRouter.post('/require_list')
