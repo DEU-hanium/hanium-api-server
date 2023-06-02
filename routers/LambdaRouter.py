@@ -19,60 +19,62 @@ class Item(BaseModel):
 
 @LambdaRouter.post('/')
 async def post_lambda(item: Item):
-    client = boto3.client('wafv2', region_name = 'ap-northeast-2')
+    try:
+        client = boto3.client('wafv2', region_name = 'ap-northeast-2')
 
-    response = client.get_ip_set(
-        Name=IPV4_SET_NAME,
-        Scope='REGIONAL',
-        Id=IPV4_SET_ID
-    )
+        response = client.get_ip_set(
+            Name=IPV4_SET_NAME,
+            Scope='REGIONAL',
+            Id=IPV4_SET_ID
+        )
 
-    Address_list = response["IPSet"]["Addresses"]
-    Address_list.append(item.ip)
-    lock_token = response['LockToken']
-    response = client.update_ip_set(
-        Name = IPV4_SET_NAME,
-        Scope = 'REGIONAL',
-        Id = IPV4_SET_ID,
-        Description = 'string',
-        Addresses = Address_list,
-        LockToken=lock_token
-    )
-    print(response)
+        Address_list = response["IPSet"]["Addresses"]
+        Address_list.append(item.ip)
+        lock_token = response['LockToken']
+        response = client.update_ip_set(
+            Name = IPV4_SET_NAME,
+            Scope = 'REGIONAL',
+            Id = IPV4_SET_ID,
+            Description = 'string',
+            Addresses = Address_list,
+            LockToken=lock_token
+        )
 
-    template = {
-        "blocks": [
-            {
-                "type": "header",
-                "text": {
-                    "type": "plain_text",
-                    "text": "해당 IP가 차단되었습니다."
+        template = {
+            "blocks": [
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "해당 IP가 차단되었습니다."
+                    }
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "plain_text",
+                        "text": item.ip
+                    }
                 }
-            },
-            {
-                "type": "divider"
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "plain_text",
-                    "text": item.ip
-                }
-            }
-        ]
-    }
+            ]
+        }
 
-    url = "https://slack.com/api/chat.postMessage"
-    headers = {
-        "Authorization": f"Bearer {os.environ['SLACK_TOKEN'].strip()}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "channel": "#crawling-channel",
-        "blocks": template["blocks"]
-    }
+        url = "https://slack.com/api/chat.postMessage"
+        headers = {
+            "Authorization": f"Bearer {os.environ['SLACK_TOKEN'].strip()}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "channel": "#crawling-channel",
+            "blocks": template["blocks"]
+        }
 
-    response = requests.post(url, headers=headers, json=payload)
-    print(response.json())
+        response = requests.post(url, headers=headers, json=payload)
+    
+    except:
+        return "에러"
 
     return
