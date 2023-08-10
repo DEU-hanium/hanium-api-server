@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers.LambdaRouter import LambdaRouter
 from routers.SlackRouter import SlackRouter
+from routers.ReactRouter import ReactRouter
 
 app = FastAPI()
 
@@ -17,6 +18,7 @@ app.add_middleware(
 
 app.include_router(LambdaRouter)
 app.include_router(SlackRouter)
+app.include_router(ReactRouter)
 
 # @app.get("/")
 # def post_ban():
