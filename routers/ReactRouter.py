@@ -26,6 +26,11 @@ async def ban(request: Request):
     )
     try:
         cur = con.cursor()
+        sql = f"select * from allow_list where ip='{request.client.host}'"
+        cur.execute(sql)
+        rows = cur.fetchall()
+        if len(rows) != 0:
+            return "OK"
         sql = "insert into ban_list values('"+request.client.host+"', '4', current_timestamp)"
         cur.execute(sql)
         con.commit()

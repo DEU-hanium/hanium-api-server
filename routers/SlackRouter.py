@@ -58,8 +58,8 @@ async def post_ban_list(request: Request):
 	return template
 
 
-@SlackRouter.post('/require')
-async def post_require(request: Request):
+@SlackRouter.post('/allow')
+async def post_allow(request: Request):
 	
 	form_data = await request.form()
 	
@@ -73,11 +73,11 @@ async def post_require(request: Request):
 	cur = con.cursor()
 	sql = "delete from ban_list where ip='"+ form_data.get('text') + "'"
 	cur.execute(sql)
-	sql = "select * from require_list where ip='" + form_data.get('text') + "'"
+	sql = "select * from allow_list where ip='" + form_data.get('text') + "'"
 	cur.execute(sql)
 	row_result = cur.rowcount
 	if row_result == 0:
-		sql = "insert into require_list values ('"+ form_data.get('text') +"', '', current_timestamp)"
+		sql = "insert into allow_list values ('"+ form_data.get('text') +"', '', current_timestamp)"
 		cur.execute(sql)
 	con.commit()
 	cur.close()
@@ -108,8 +108,8 @@ async def post_require(request: Request):
 	
 
 
-@SlackRouter.post('/require_list')
-async def post_require_list():
+@SlackRouter.post('/allow_list')
+async def post_allow_list():
 	con = pymysql.connect(
 		host = os.environ['DATABASE_HOST'].strip(),
 		user = os.environ['DATABASE_USER'].strip(),
@@ -133,7 +133,7 @@ async def post_require_list():
 		]
 	}
 	cur = con.cursor()
-	sql = "select * from require_list"
+	sql = "select * from allow_list"
 	cur.execute(sql)
 	rows = cur.fetchall()
 	for element in rows:
