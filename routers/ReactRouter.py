@@ -1,5 +1,4 @@
-from fastapi import APIRouter
-from fastapi import Request
+from fastapi import APIRouter, Request, Response
 import os
 from dotenv import load_dotenv
 import pymysql
@@ -16,7 +15,7 @@ ReactRouter = APIRouter(
 )
 
 @ReactRouter.get('/')
-async def ban(request: Request):
+async def ban(request: Request, response: Response):
     con = pymysql.connect(
         host = os.environ['DATABASE_HOST'].strip(),
         user = os.environ['DATABASE_USER'].strip(),
@@ -30,6 +29,7 @@ async def ban(request: Request):
         cur.execute(sql)
         rows = cur.fetchall()
         if len(rows) != 0:
+            response.status_code = 204
             return "OK"
         sql = "insert into ban_list values('"+request.client.host+"', '4', current_timestamp)"
         cur.execute(sql)
@@ -89,6 +89,7 @@ async def ban(request: Request):
         }
 
         response = requests.post(url, headers=headers, json=payload)
+        response.status_code = 200
         return "OK"
 
     except:
